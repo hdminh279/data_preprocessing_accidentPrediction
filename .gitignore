@@ -15,7 +15,6 @@ data/
 *.csv
 
 # Jupyter Notebook
-*.ipynb
 .ipynb_checkpoints/
 
 # IDE configs
