@@ -7,7 +7,8 @@
 import pyspark
 from pyspark.sql import SparkSession
 from pyspark.sql import functions as F
-from pyspark.sql.functions import mean, median
+from pyspark.ml.feature import StringIndexer
+from pyspark.ml import Pipeline
 
 
 # In[2]:
@@ -108,13 +109,13 @@ df_clean = df_data.dropna(subset=['casualty_class', 'date', 'time', 'road_type']
 df_clean = df_clean.dropDuplicates(["collision_index","casualty_class","age_of_casualty", "sex_of_casualty"])
 
 
-# In[ ]:
+# In[13]:
 
 
 check_missing_val(df_clean)
 
 
-# In[ ]:
+# In[14]:
 
 
 # Handle missing value with median for speed and age
@@ -122,7 +123,7 @@ median_speed = df_clean.approxQuantile("speed_limit", [0.5], 0.01)[0]
 median_age = df_clean.approxQuantile("age_of_casualty", [0.5], 0.01)[0]
 
 
-# In[ ]:
+# In[15]:
 
 
 df_clean = df_clean.fillna({
@@ -131,7 +132,7 @@ df_clean = df_clean.fillna({
 })
 
 
-# In[ ]:
+# In[16]:
 
 
 # Handle missing value with mode for sex, light, weather and road surface
@@ -143,43 +144,43 @@ mode_cols = [
 ]
 
 
-# In[ ]:
+# In[17]:
 
 
 mode_values = df_clean.agg(*[F.mode(c).alias(c) for c in mode_cols]).collect()[0].asDict()
 
 
-# In[ ]:
+# In[18]:
 
 
 df_clean = df_clean.fillna(mode_values)
 
 
-# In[ ]:
+# In[19]:
 
 
 check_missing_val(df_clean)
 
 
-# In[ ]:
+# In[20]:
 
 
 df_clean = df_clean.fillna({"urban_or_rural_area": 3})
 
 
-# In[ ]:
+# In[21]:
 
 
 check_missing_val(df_clean)
 
 
-# In[ ]:
+# In[22]:
 
 
 df_clean.select("time").show()
 
 
-# In[ ]:
+# In[23]:
 
 
 # Binning col time into 4 bins
@@ -193,10 +194,56 @@ df_clean = df_clean.withColumn("time_bin",
 )
 
 
-# In[ ]:
+# In[24]:
 
 
 df_clean.select("time_bin").show()
+
+
+# In[25]:
+
+
+# Encoded data using StringIndexer
+
+
+# In[26]:
+
+
+categorical_cols = [
+    "road_type",
+    "casualty_class",
+    "sex_of_casualty",
+    "light_conditions",
+    "weather_conditions",
+    "road_surface_conditions",
+    "urban_or_rural_area",
+    "time_bin"
+]
+
+
+# In[27]:
+
+
+indexers = [
+    StringIndexer(inputCol=col, outputCol=f"{col}_idx", handleInvalid="keep")
+    for col in categorical_cols
+]
+
+
+# In[28]:
+
+
+pipeline = Pipeline(stages=indexers)
+df_clean_encoded = pipeline.fit(df_clean).transform(df_clean)
+
+
+# In[29]:
+
+
+df_clean_encoded.select(
+    "time_bin", "time_bin_idx", 
+    "sex_of_casualty", "sex_of_casualty_idx"
+).show(5)
 
 
 # In[ ]:
