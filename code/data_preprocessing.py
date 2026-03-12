@@ -278,8 +278,8 @@ df_final.select(
 
 ratio = {1.0: 0.8, 2.0: 0.8, 3.0: 0.8}
 
-df_train = df_clean_encoded.sampleBy(label_col, fractions=ratio, seed=42)
-df_test = df_clean_encoded.subtract(df_train)
+df_train = df_final.sampleBy(label_col, fractions=ratio, seed=42)
+df_test = df_final.subtract(df_train)
 
 df_train.groupBy(label_col).count().orderBy(label_col).show()
 
@@ -303,3 +303,9 @@ chi_df = pd.DataFrame({
 
 chi_df = chi_df.sort_values(by="Điểm Chi-Square (Statistic)", ascending=False)
 print(chi_df.to_string(index=False))
+
+df_final.write.parquet("../data/clean/", mode='overwrite')
+
+## Dữ liệu tối ưu cuối cùng
+df_final_optimize = df_final.select("features", "casualty_severity", "class_weight")
+df_final_optimize.write.parquet("../data/clean/optimize", mode='overwrite')
