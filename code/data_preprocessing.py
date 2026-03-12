@@ -4,6 +4,8 @@ import pyspark
 from pyspark.sql import SparkSession
 from pyspark.sql import functions as F
 from pyspark.ml.feature import StringIndexer, VectorAssembler, StandardScaler
+from pyspark.ml.stat import ChiSquareTest
+import pandas as pd
 from pyspark.ml import Pipeline
 
 spark = SparkSession.builder \
@@ -273,3 +275,31 @@ df_final.select(
     "numeric_features_scaled",
     "features"
 ).show(5, truncate=False)
+
+ratio = {1.0: 0.8, 2.0: 0.8, 3.0: 0.8}
+
+df_train = df_clean_encoded.sampleBy(label_col, fractions=ratio, seed=42)
+df_test = df_clean_encoded.subtract(df_train)
+
+df_train.groupBy(label_col).count().orderBy(label_col).show()
+
+chi_assembler = VectorAssembler(
+    inputCols=encoded_feature_cols, 
+    outputCol="cat_features_vector", 
+    handleInvalid="keep"
+)
+
+df_for_chi = chi_assembler.transform(df_train).select("cat_features_vector", label_col)
+chi_result = ChiSquareTest.test(df_for_chi, "cat_features_vector", label_col).head()
+
+p_values = chi_result.pValues.toArray()
+statistics = chi_result.statistics.toArray()
+
+chi_df = pd.DataFrame({
+    "Đặc trưng (Feature)": encoded_feature_cols,
+    "Điểm Chi-Square (Statistic)": statistics,
+    "P-Value": p_values
+})
+
+chi_df = chi_df.sort_values(by="Điểm Chi-Square (Statistic)", ascending=False)
+print(chi_df.to_string(index=False))
