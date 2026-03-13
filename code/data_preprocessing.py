@@ -309,3 +309,5 @@ df_final.write.parquet("../data/clean/", mode='overwrite')
 ## Dữ liệu tối ưu cuối cùng
 df_final_optimize = df_final.select("features", "casualty_severity", "class_weight")
 df_final_optimize.write.parquet("../data/clean/optimize", mode='overwrite')
+
+spark.stop()
