@@ -1,12 +1,13 @@
 [project]
-name = "btl"
+name = "data-preprocessing-project"
 version = "0.1.0"
 description = "Add your description here"
 readme = "README.md"
-requires-python = ">=3.13"
+requires-python = ">=3.12"
 dependencies = [
     "jupyter>=1.1.1",
-    "notebook>=7.5.4",
+    "matplotlib>=3.10.8",
+    "notebook>=7.5.5",
     "pandas>=3.0.1",
-    "pyspark>=4.1.1",
+    "seaborn>=0.13.2",
 ]
